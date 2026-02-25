@@ -26,6 +26,7 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/distributed.cu
           ${CMAKE_CURRENT_SOURCE_DIR}/eval.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/event.cu
+          ${CMAKE_CURRENT_SOURCE_DIR}/fft.cu
           ${CMAKE_CURRENT_SOURCE_DIR}/fence.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/gemms/gemv.cu
           ${CMAKE_CURRENT_SOURCE_DIR}/gemms/cublas_gemm.cpp
@@ -195,6 +196,7 @@ else()
       PROPERTY INSTALL_RPATH
                # The paths here should match the install_requires in setup.py.
                "$ORIGIN/../../nvidia/cublas/lib"
+               "$ORIGIN/../../nvidia/cufft/lib"
                "$ORIGIN/../../nvidia/cuda_nvrtc/lib"
                "$ORIGIN/../../nvidia/cudnn/lib"
                "$ORIGIN/../../nvidia/nccl/lib")
@@ -238,6 +240,9 @@ target_include_directories(mlx PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
 
 # Use cublasLt.
 target_link_libraries(mlx PRIVATE CUDA::cublasLt)
+
+# Use cuFFT.
+target_link_libraries(mlx PRIVATE CUDA::cufft)
 
 # Use NVRTC and driver APIs.
 target_link_libraries(mlx PRIVATE CUDA::nvrtc CUDA::cuda_driver)

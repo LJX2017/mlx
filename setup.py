@@ -292,11 +292,13 @@ if __name__ == "__main__":
             if toolkit == 12:
                 install_requires += [
                     "nvidia-cublas-cu12==12.9.*",
+                    "nvidia-cufft-cu12",
                     "nvidia-cuda-nvrtc-cu12==12.9.*",
                 ]
             elif toolkit == 13:
                 install_requires += [
                     "nvidia-cublas",
+                    "nvidia-cufft",
                     "nvidia-cuda-nvrtc",
                 ]
             else:
