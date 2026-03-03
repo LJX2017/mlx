@@ -57,7 +57,6 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/quantized/affine_quantize.cu
           ${CMAKE_CURRENT_SOURCE_DIR}/quantized/fp_quantize.cu
-          ${CMAKE_CURRENT_SOURCE_DIR}/quantized/qmm_sm90.cu
           ${CMAKE_CURRENT_SOURCE_DIR}/quantized/qmv.cu
           ${CMAKE_CURRENT_SOURCE_DIR}/quantized/quantized.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/quantized/qqmm.cpp
@@ -66,6 +65,7 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/worker.cpp)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/binary)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/quantized/qmm)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/unary)
 
 # fp4 is not available on < 12.8
@@ -146,12 +146,11 @@ if(NOT DEFINED MLX_CUDA_ARCHITECTURES)
     COMMAND __nvcc_device_query
     OUTPUT_VARIABLE MLX_CUDA_ARCHITECTURES
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-  set(UPGRADABLE_ARCHITECTURES "90;100;121")
   if(MLX_CUDA_ARCHITECTURES STREQUAL "")
     message(
       FATAL_ERROR
         "Can not get native CUDA arch, must set MLX_CUDA_ARCHITECTURES")
-  elseif(MLX_CUDA_ARCHITECTURES IN_LIST UPGRADABLE_ARCHITECTURES)
+  elseif(MLX_CUDA_ARCHITECTURES GREATER_EQUAL 90)
     # Use arch-specific compute capability whenever possible.
     set(MLX_CUDA_ARCHITECTURES "${MLX_CUDA_ARCHITECTURES}a")
   endif()
@@ -159,6 +158,13 @@ endif()
 message(STATUS "CUDA architectures: ${MLX_CUDA_ARCHITECTURES}")
 set_target_properties(mlx PROPERTIES CUDA_ARCHITECTURES
                                      "${MLX_CUDA_ARCHITECTURES}")
+
+# Skip Hopper-only kernels when not building for sm90a.
+if(NOT DEFINED ENV{MLX_DISABLE_SM90A_KERNELS}
+   AND (("90a" IN_LIST MLX_CUDA_ARCHITECTURES) OR ("90a-real" IN_LIST
+                                                   MLX_CUDA_ARCHITECTURES)))
+  target_compile_definitions(mlx PRIVATE MLX_CUDA_SM90A_ENABLED)
+endif()
 
 # Search CUDA libs from installed python packages.
 if(WIN32)
